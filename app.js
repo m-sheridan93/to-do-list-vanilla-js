@@ -6,6 +6,25 @@ const list = document.getElementById('list');
 
 // in-memory array for todos (each todo is { id, text, completed })
 let todos = [];
+const TODO_KEY = 'todos.v1';
+
+function saveTodos() {
+    try {
+        localStorage.setItem(TODO_KEY, JSON.stringify(todos));
+    } catch (e) {
+        console.error('Failed to save todos', e);
+    }
+}
+
+function loadTodos() {
+    try {
+        const raw = localStorage.getItem(TODO_KEY);
+        todos = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        console.error('Failed to load todos — resetting', e);
+        todos = [];
+    }
+}
 
 function render() {
     list.innerHTML = '';
@@ -33,6 +52,7 @@ function render() {
 
         deleteButton.addEventListener('click', () => {
             todos = todos.filter(item => item.id !== t.id);
+            saveTodos();
             render();
         });
 
@@ -47,6 +67,7 @@ function render() {
 function addTodo(text) {
     if (!text || !text.trim()) return;
     todos.unshift({id: Date.now().toString(), text: text.trim(), completed: false});
+    saveTodos();
     render();
 }
 
@@ -62,4 +83,5 @@ input.addEventListener('keydown', (e) => {
 });
 
 // initial render
+loadTodos();
 render();
