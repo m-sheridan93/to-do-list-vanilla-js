@@ -7,12 +7,16 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<h1>To‑Do</h1>
+<main class="app">
+    <h1>To‑Do</h1>
 
-<input id="newTodo" placeholder="Add a To-Do" />
-<button id="addBtn">Add</button>
+    <div class="input-row">
+        <input id="newTodo" placeholder="Add a To-Do" />
+        <button id="addBtn">Add</button>
+    </div>
 
-<ul id="list"></ul>
+    <ul id="list" aria-live="polite"></ul>
+</main>
 
 <script src="app.js"></script>
 </body>
