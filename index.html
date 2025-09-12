@@ -3,32 +3,17 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>To‑Do List (Vanilla JS)</title>
+    <title>To‑Do (vanilla)</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<main class="app">
-    <header>
-        <h1>To‑Do List</h1>
-    </header>
+<h1>To‑Do</h1>
 
-    <section class="todo-input">
-        <label for="new-todo" class="visually-hidden">Add todo</label>
-        <input id="new-todo" placeholder="What do you need to do?" />
-        <button id="add-btn">Add</button>
-    </section>
+<input id="newTodo" placeholder="Add a todo" />
+<button id="addBtn">Add</button>
 
-    <section id="todos" aria-live="polite">
-        <!-- Todos will be rendered here -->
-    </section>
+<ul id="list"></ul>
 
-    <footer id="counts">
-        <span id="total">Total: 0</span>
-        <span id="remaining">Remaining: 0</span>
-        <span id="completed">Completed: 0</span>
-    </footer>
-</main>
-
-<script src="app.js" type="module"></script>
+<script src="app.js"></script>
 </body>
 </html>
