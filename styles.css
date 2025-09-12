@@ -2,3 +2,6 @@ body { font-family: system-ui, sans-serif; padding: 1rem; max-width: 600px; marg
 input { padding: .4rem; width: 70%; }
 button { padding: .4rem; }
 li { margin: .5rem 0; list-style: none; padding: .4rem; border: 1px solid #ddd; border-radius: 4px; display:flex; gap:.5rem; align-items:center; }
+ul li.checked {
+    text-decoration: line-through;
+}
