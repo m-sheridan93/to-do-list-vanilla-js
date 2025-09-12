@@ -44,6 +44,7 @@ function render() {
         span.textContent = t.text;
 
         // delete button
+        // delete button (single listener, with save)
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.className = 'delete';
@@ -56,13 +57,34 @@ function render() {
             render();
         });
 
+// checkbox reflects completed and updates data
+        const checkBox = document.createElement('input');
+        checkBox.type = 'checkbox';
+        checkBox.className = 'select';
+        checkBox.setAttribute('aria-label', 'Mark todo completed');
+        checkBox.checked = !!t.completed;
+
+        checkBox.addEventListener('change', () => {
+            // update data, persist, and re-render
+            const todo = todos.find(item => item.id === t.id);
+            if (todo) {
+                todo.completed = checkBox.checked;
+                saveTodos();
+                render();
+            }
+        });
+
+        if (t.completed) {
+            li.classList.add('completed');
+        }
+
         // append elements in the right order
+        li.appendChild(checkBox);
         li.appendChild(span);
         li.appendChild(deleteButton);
         list.appendChild(li);
     }
 }
-
 
 function addTodo(text) {
     if (!text || !text.trim()) return;
