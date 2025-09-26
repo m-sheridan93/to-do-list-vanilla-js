@@ -4,6 +4,73 @@ const listEl   = document.querySelector('.list');
 const TODO_KEY = 'todos.v1';
 let todos = [];
 
+function createCheckBox(li, t) {
+    const checkBox = document.createElement('input');
+    checkBox.type = 'checkbox';
+    checkBox.checked = !!t.completed;
+    checkBox.setAttribute('aria-label', 'Mark To-Do as complete');
+    checkBox.addEventListener('change', () => {
+        t.completed = checkBox.checked;
+        saveTodos();
+        render();
+    });
+    return checkBox;
+}
+
+function createEditButton(li, t, span) {
+    const editButton = document.createElement('button');
+    editButton.className = 'edit';
+    editButton.textContent = 'Edit';
+    editButton.addEventListener('click', () => {
+        // Prevent opening more than one edit input in this <li>
+        if (li.querySelector('.edit-input')) return;
+
+        const inputEdit = document.createElement('input');
+        inputEdit.type = 'text';
+        inputEdit.className = 'edit-input';
+        inputEdit.value = t.text;
+        span.replaceWith(inputEdit);
+        inputEdit.focus();
+        inputEdit.select();
+
+        let finished = false;
+        function commitEdit() {
+            if (finished) return;
+            const val = inputEdit.value.trim();
+            if (val) {
+                t.text = val;
+                saveTodos();
+            }
+            finished = true;
+            render();  // You could parameterize this
+        }
+        function cancelEdit() {
+            if (finished) return;
+            finished = true;
+            render();
+        }
+        inputEdit.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') commitEdit();
+            else if (e.key === 'Escape') cancelEdit();
+        });
+        inputEdit.addEventListener('blur', commitEdit);
+    });
+    return editButton;
+}
+
+function createDeleteButton(li, t) {
+    const deleteButton = document.createElement('button');
+
+    deleteButton.className = 'delete';
+    deleteButton.textContent = 'x';
+    deleteButton.addEventListener('click', () => {
+        todos = todos.filter(item => item.id !== t.id);
+        saveTodos();
+        render();
+    });
+    return deleteButton;
+}
+
 function saveTodos() {
     try {
         localStorage.setItem(TODO_KEY, JSON.stringify(todos));
@@ -38,69 +105,17 @@ function render() {
         li.dataset.id = t.id;
         li.classList.toggle('completed', !!t.completed);
 
-        // Checkbox
-        const checkBox = document.createElement('input');
-        checkBox.type = 'checkbox';
-        checkBox.checked = !!t.completed;
-        checkBox.setAttribute('aria-label', 'Mark To-Do as complete');
-        checkBox.addEventListener('change', () => {
-            t.completed = checkBox.checked;
-            saveTodos();
-            render();
-        });
-
         // Todo Text or edit input
         const span = document.createElement('span');
         span.className = 'todo-text';
         span.textContent = t.text;
 
+        // Check Box
+        const checkBox = createCheckBox(li, t, span);
         // Edit Button
-        const editButton = document.createElement('button');
-        editButton.className = 'edit';
-        editButton.textContent = 'Edit';
-        editButton.addEventListener('click', () => {
-            if (li.querySelector('.edit-input')) return; // Already editing
-
-            const inputEdit = document.createElement('input');
-            inputEdit.type = 'text';
-            inputEdit.className = 'edit-input';
-            inputEdit.value = t.text;
-            span.replaceWith(inputEdit);
-            inputEdit.focus();
-            inputEdit.select();
-
-            let finished = false;
-            function commitEdit() {
-                if (finished) return;
-                const val = inputEdit.value.trim();
-                if (val) {
-                    t.text = val;
-                    saveTodos();
-                }
-                finished = true;
-                render();
-            }
-            function cancelEdit() {
-                if (finished) return;
-                finished = true;
-                render();
-            }
-            inputEdit.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') commitEdit();
-                else if (e.key === 'Escape') cancelEdit();
-            });
-            inputEdit.addEventListener('blur', commitEdit);
-        });
-
+        const editButton = createEditButton(li, t, span);
         // Delete Button
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'delete';
-        deleteButton.textContent = 'x';
-        deleteButton.addEventListener('click', () => {
-            todos = todos.filter(item => item.id !== t.id);
-            saveTodos();
-            render();
-        });
+        const deleteButton = createDeleteButton(li, t);
 
         li.append(checkBox, span, editButton, deleteButton);
         listEl.appendChild(li);
