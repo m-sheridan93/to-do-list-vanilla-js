@@ -1,34 +1,20 @@
-const input = document.getElementById('newTodo');
-const addBtn = document.getElementById('addBtn');
-const list = document.getElementById('list');
-
+const input    = document.querySelector('.new-todo');
+const addBtn   = document.querySelector('.add-btn');
+const listEl   = document.querySelector('.list');
 const TODO_KEY = 'todos.v1';
 let todos = [];
 
-function addToDo(text) {
-    if (!text || !text.trim()) return;
-    let id = Date.now();
-
-    const item = {id, text: text.trim(), completed: false}
-
-    todos.unshift(item);
-    saveTodos();
-    render();
-}
-
 function saveTodos() {
     try {
-        const json = JSON.stringify(todos); // localStorage can only store strings so we convert it
-        localStorage.setItem(TODO_KEY, json)
+        localStorage.setItem(TODO_KEY, JSON.stringify(todos));
     } catch (e) {
-        console.error('could not save todos', e)
+        console.error('could not save todos', e);
     }
 }
 
 function loadTodos() {
     try {
         const raw = localStorage.getItem(TODO_KEY);
-        // as localStorage only stores strings we need to convert it back to an array
         todos = raw ? JSON.parse(raw) : [];
     } catch (e) {
         console.error('could not load todos', e);
@@ -36,142 +22,112 @@ function loadTodos() {
     }
 }
 
+// ----- Renders entire list -----
 function render() {
-    list.innerHTML = '';
+    listEl.innerHTML = '';
     if (todos.length === 0) {
-        const empty = document.createElement('li')
+        const empty = document.createElement('li');
         empty.className = 'empty';
         empty.textContent = 'No todos yet - add one above';
-        list.appendChild(empty); // add the above element to the list html element
+        listEl.appendChild(empty);
         return;
     }
 
     for (const t of todos) {
-        const li = document.createElement('li')
-        li.dataset.id = t.id
+        const li = document.createElement('li');
+        li.dataset.id = t.id;
+        li.classList.toggle('completed', !!t.completed);
 
-        // add check box for each item
-        const checkBox = document.createElement('input')
+        // Checkbox
+        const checkBox = document.createElement('input');
         checkBox.type = 'checkbox';
         checkBox.checked = !!t.completed;
-        checkBox.setAttribute('aria-label', 'Mark To-Do');
-
-        // add event listener to checkbox
-        li.classList.toggle('completed', !!t.completed)
-
+        checkBox.setAttribute('aria-label', 'Mark To-Do as complete');
         checkBox.addEventListener('change', () => {
-            const todo = todos.find(item => item.id === t.id);
-            if (!todo) return;
-            todo.completed = checkBox.checked;
+            t.completed = checkBox.checked;
             saveTodos();
             render();
         });
 
-        // create a span to hold each todo item
+        // Todo Text or edit input
         const span = document.createElement('span');
         span.className = 'todo-text';
         span.textContent = t.text;
 
-        // add a delete button to each element
-        const deleteButton = document.createElement('button')
+        // Edit Button
+        const editButton = document.createElement('button');
+        editButton.className = 'edit';
+        editButton.textContent = 'Edit';
+        editButton.addEventListener('click', () => {
+            if (li.querySelector('.edit-input')) return; // Already editing
+
+            const inputEdit = document.createElement('input');
+            inputEdit.type = 'text';
+            inputEdit.className = 'edit-input';
+            inputEdit.value = t.text;
+            span.replaceWith(inputEdit);
+            inputEdit.focus();
+            inputEdit.select();
+
+            let finished = false;
+            function commitEdit() {
+                if (finished) return;
+                const val = inputEdit.value.trim();
+                if (val) {
+                    t.text = val;
+                    saveTodos();
+                }
+                finished = true;
+                render();
+            }
+            function cancelEdit() {
+                if (finished) return;
+                finished = true;
+                render();
+            }
+            inputEdit.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') commitEdit();
+                else if (e.key === 'Escape') cancelEdit();
+            });
+            inputEdit.addEventListener('blur', commitEdit);
+        });
+
+        // Delete Button
+        const deleteButton = document.createElement('button');
         deleteButton.className = 'delete';
         deleteButton.textContent = 'x';
-
         deleteButton.addEventListener('click', () => {
             todos = todos.filter(item => item.id !== t.id);
             saveTodos();
             render();
         });
 
-        // edit button and inline edit
-        const editButton = document.createElement('button');
-        editButton.className = 'edit';
-        editButton.textContent = 'Edit';
-
-        editButton.addEventListener('click', () => {
-            // guard: don't create a second input if already editing
-            if (li.querySelector('.edit-input')) return;
-
-            const textSpan = li.querySelector('.todo-text');
-            if (!textSpan) return;
-
-            // create and show the inline input
-            const inputEdit = document.createElement('input');
-            inputEdit.type = 'text';
-            inputEdit.className = 'edit-input';
-            inputEdit.value = (textSpan.textContent || t.text || '').trim();
-
-            textSpan.replaceWith(inputEdit);
-            inputEdit.focus();
-            inputEdit.select();
-
-            // prevent double handling from blur + keydown
-            let finished = false;
-
-            // commit and cancel helpers
-            function commit() {
-                if (finished) return;
-                const newText = inputEdit.value.trim();
-                if (newText.length > 0) {
-                    const todo = todos.find(item => item.id === t.id);
-                    if (todo) {
-                        todo.text = newText;
-                        saveTodos();
-                    }
-                }
-                finished = true;
-                render();
-            }
-
-            function cancel() {
-                if (finished) return;
-                finished = true;
-                render();
-            }
-
-            // keyboard: Enter = commit, Escape = cancel
-            inputEdit.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') commit();
-                if (e.key === 'Escape') cancel();
-            });
-
-            // blur = commit (unless already finished)
-            inputEdit.addEventListener('blur', () => {
-                if (finished) return;
-                commit();
-            });
-        });
-
-        li.appendChild(checkBox);
-        li.appendChild(span);
-        li.appendChild(editButton)
-        li.appendChild(deleteButton);
-        list.appendChild(li);
+        li.append(checkBox, span, editButton, deleteButton);
+        listEl.appendChild(li);
     }
 }
 
-function setupEventListeners() {
-    addBtn.addEventListener('click', () => {
-        addToDo(input.value)
-        input.value = '';
-        input.focus();
-    });
-
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') addBtn.click();
-    });
-
-
-    inputEdit.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') commit();
-        if (e.key === 'Escape') cancel();
-    });
-}
-
-function init() {
-    loadTodos();
+// ----- Add -----
+function addToDo(text) {
+    const val = text && text.trim();
+    if (!val) return;
+    const item = { id: Date.now(), text: val, completed: false };
+    todos.unshift(item);
+    saveTodos();
     render();
-    setupEventListeners();
 }
 
-init();
+// ----- Event Listeners -----
+addBtn.addEventListener('click', () => {
+    addToDo(input.value);
+    input.value = '';
+    input.focus();
+});
+
+input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addBtn.click();
+});
+
+// ----- Initialization -----
+loadTodos();
+render();
